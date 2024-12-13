@@ -23,6 +23,9 @@ def load_model(model_size):
     return vl_chat_processor, tokenizer, vl_gpt
 
 def process_image_and_prompt(images, prompt, model_size):
+    if not images:
+        return "Please upload at least one image.", []
+    
     output_images = []
     try:
         # Load model based on selected size
@@ -71,7 +74,7 @@ def process_image_and_prompt(images, prompt, model_size):
         
         return answer, output_images
     except Exception as e:
-        return f"Error: {str(e)}", None
+        return f"Error: {str(e)}", []
 
 # Parse arguments first
 parser = argparse.ArgumentParser(description='DeepseekVL Demo')
