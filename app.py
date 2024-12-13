@@ -6,16 +6,26 @@ from deepseek_vl.utils.io import load_pil_images
 from PIL import Image
 import os
 
-# Initialize model and processor
-model_path = "deepseek-ai/deepseek-vl2-small"
-vl_chat_processor = DeepseekVLV2Processor.from_pretrained(model_path)
-tokenizer = vl_chat_processor.tokenizer
+# Model initialization will be done in the processing function
+MODEL_PATHS = {
+    "tiny": "deepseek-ai/deepseek-vl2-tiny",
+    "small": "deepseek-ai/deepseek-vl2-small",
+    "base": "deepseek-ai/deepseek-vl2"
+}
 
-vl_gpt = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True)
-vl_gpt = vl_gpt.to(torch.bfloat16).cuda().eval()
+def load_model(model_size):
+    model_path = MODEL_PATHS[model_size]
+    vl_chat_processor = DeepseekVLV2Processor.from_pretrained(model_path)
+    tokenizer = vl_chat_processor.tokenizer
+    vl_gpt = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True)
+    vl_gpt = vl_gpt.to(torch.bfloat16).cuda().eval()
+    return vl_chat_processor, tokenizer, vl_gpt
 
-def process_image_and_prompt(images, prompt):
+def process_image_and_prompt(images, prompt, model_size):
     try:
+        # Load model based on selected size
+        vl_chat_processor, tokenizer, vl_gpt = load_model(model_size)
+        
         # Prepare conversation format
         conversation = [
             {
@@ -63,6 +73,12 @@ with gr.Blocks() as demo:
     
     with gr.Row():
         with gr.Column():
+            model_choice = gr.Radio(
+                choices=list(MODEL_PATHS.keys()),
+                value="small",
+                label="Model Size",
+                info="Choose the model size (larger = better but slower)"
+            )
             image_input = gr.File(
                 label="Upload Images",
                 file_count="multiple",
@@ -79,7 +95,7 @@ with gr.Blocks() as demo:
     
     submit_btn.click(
         fn=process_image_and_prompt,
-        inputs=[image_input, text_input],
+        inputs=[image_input, text_input, model_choice],
         outputs=output
     )
 
