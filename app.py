@@ -106,8 +106,13 @@ if __name__ == "__main__":
                        help='Fix the model size (disables model selection in UI)')
     args = parser.parse_args()
     
-    # Set default values for model choice
-    model_choice.value = args.model if args.model else "small"
-    model_choice.interactive = not bool(args.model)
+    if args.model:
+        # If model is specified via CLI, fix it and disable UI selection
+        model_choice.value = args.model
+        model_choice.interactive = False
+    else:
+        # Default to "small" but keep UI selection enabled
+        model_choice.value = "small"
+        model_choice.interactive = True
     
     demo.launch(share=True)
