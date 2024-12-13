@@ -106,9 +106,8 @@ if __name__ == "__main__":
                        help='Fix the model size (disables model selection in UI)')
     args = parser.parse_args()
     
-    if args.model:
-        # Update the model choice component to be disabled and set to the fixed model
-        model_choice.value = args.model
-        model_choice.interactive = False
-        
+    # Set default values for model choice
+    model_choice.value = args.model if args.model else "small"
+    model_choice.interactive = not bool(args.model)
+    
     demo.launch(share=True)
