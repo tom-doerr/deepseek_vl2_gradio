@@ -146,12 +146,23 @@ with gr.Blocks() as demo:
     with gr.Row():
         with gr.Column():
             model_choice = gr.Radio(
-                choices=[args.model] if args.model else list(MODEL_PATHS.keys()),
+                choices=list(MODEL_PATHS.keys()),  # Always show all choices
                 value=args.model if args.model else "small",
                 label="Model Size",
                 info="Choose the model size (larger = better but slower)",
-                interactive=not bool(args.model)
+                interactive=not bool(args.model),
+                elem_classes=["model-choice"]  # For styling
             )
+            
+            # Add CSS to grey out disabled choices
+            gr.HTML("""
+                <style>
+                    .model-choice.disabled .gr-radio-row:not(.selected) {
+                        opacity: 0.5;
+                        pointer-events: none;
+                    }
+                </style>
+            """)
             image_input = gr.File(
                 label="Upload Images",
                 file_count="multiple",
