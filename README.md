@@ -1,6 +1,15 @@
+<div align="center">
+
 # DeepSeek-VL2 Gradio Demo
 
 A Gradio web interface for the DeepSeek-VL2 visual language model that enables interactive visual question-answering and image understanding.
+
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Gradio](https://img.shields.io/badge/Gradio-4.44.1-orange.svg)](https://gradio.app/)
+[![DeepSeek-VL2](https://img.shields.io/badge/Model-DeepSeek--VL2-green.svg)](https://github.com/deepseek-ai/DeepSeek-VL)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+</div>
 
 ## Features
 
