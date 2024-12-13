@@ -76,7 +76,7 @@ args = parser.parse_args()
 
 # Create Gradio interface
 with gr.Blocks() as demo:
-    gr.Markdown("# DeepseekVL Visual Language Model Demo")
+    gr.Markdown("# DeepseekVL V2 Visual Language Model Demo")
     
     with gr.Row():
         with gr.Column():
