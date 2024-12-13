@@ -4,7 +4,7 @@ import argparse
 from transformers import AutoModelForCausalLM
 from deepseek_vl.models import DeepseekVLV2Processor, DeepseekVLV2ForCausalLM
 from deepseek_vl.utils.io import load_pil_images
-from PIL import Image
+from PIL import Image, ImageDraw
 import os
 
 # Model initialization will be done in the processing function
@@ -23,6 +23,10 @@ def load_model(model_size):
     return vl_chat_processor, tokenizer, vl_gpt
 
 def process_image_and_prompt(images, prompt, model_size):
+    if not images:
+        return "Please upload at least one image.", []
+    
+    output_images = []
     try:
         # Load model based on selected size
         vl_chat_processor, tokenizer, vl_gpt = load_model(model_size)
@@ -37,9 +41,19 @@ def process_image_and_prompt(images, prompt, model_size):
             {"role": "<|Assistant|>", "content": ""},
         ]
 
-        # Convert uploaded images to PIL format
-        pil_images = [Image.open(img.name) for img in images]
+        # Convert uploaded images to PIL format and store them
+        pil_images = []
+        for img in images:
+            if img is not None and hasattr(img, 'name'):
+                try:
+                    pil_img = Image.open(img.name)
+                    pil_images.append(pil_img)
+                except Exception as e:
+                    return f"Error loading image: {str(e)}", []
         
+        if not pil_images:
+            return "No valid images were uploaded.", []
+            
         # Prepare inputs
         prepare_inputs = vl_chat_processor(
             conversations=conversation,
@@ -64,9 +78,13 @@ def process_image_and_prompt(images, prompt, model_size):
         )
 
         answer = tokenizer.decode(outputs[0].cpu().tolist(), skip_special_tokens=True)
-        return answer
+        # Process the response to extract any bounding box information
+        # For now, just display the original images
+        output_images = [Image.open(img.name) for img in images]
+        
+        return answer, output_images
     except Exception as e:
-        return f"Error: {str(e)}"
+        return f"Error: {str(e)}", []
 
 # Parse arguments first
 parser = argparse.ArgumentParser(description='DeepseekVL Demo')
@@ -76,7 +94,7 @@ args = parser.parse_args()
 
 # Create Gradio interface
 with gr.Blocks() as demo:
-    gr.Markdown("# DeepseekVL Visual Language Model Demo")
+    gr.Markdown("# DeepSeek-VL2 Visual Language Model Demo")
     
     with gr.Row():
         with gr.Column():
@@ -100,11 +118,12 @@ with gr.Blocks() as demo:
         
         with gr.Column():
             output = gr.Textbox(label="Model Response")
+            image_output = gr.Gallery(label="Processed Images")
     
     submit_btn.click(
         fn=process_image_and_prompt,
         inputs=[image_input, text_input, model_choice],
-        outputs=output
+        outputs=[output, image_output]
     )
 
 if __name__ == "__main__":
