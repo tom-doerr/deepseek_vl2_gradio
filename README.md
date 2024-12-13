@@ -35,7 +35,14 @@ A Gradio web interface for the DeepSeek-VL2 visual language model that enables i
 1. Clone this repository
 2. Install the required packages:
 ```bash
-pip install torch gradio transformers deepseek-vl Pillow
+pip install torch gradio transformers deepseek-vl Pillow pytest
+```
+
+## Testing
+
+Run the tests with:
+```bash
+pytest tests/
 ```
 
 ## Usage
