@@ -44,7 +44,15 @@ def test_draw_bounding_boxes_empty_text(sample_image):
     assert isinstance(result, Image.Image)
     assert result.size == sample_image.size
 
+def is_flash_attn_installed():
+    try:
+        import flash_attn  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+@pytest.mark.skipif(not is_flash_attn_installed(), reason="flash_attn not installed")
 def test_load_model():
     # Test model loading for tiny model
     vl_chat_processor, tokenizer, vl_gpt = load_model("tiny")
