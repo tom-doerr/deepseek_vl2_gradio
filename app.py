@@ -1,5 +1,6 @@
 import torch
 import gradio as gr
+import argparse
 from transformers import AutoModelForCausalLM
 from deepseek_vl.models import DeepseekVLV2Processor, DeepseekVLV2ForCausalLM
 from deepseek_vl.utils.io import load_pil_images
@@ -100,4 +101,14 @@ with gr.Blocks() as demo:
     )
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='DeepseekVL Demo')
+    parser.add_argument('--model', choices=list(MODEL_PATHS.keys()), 
+                       help='Fix the model size (disables model selection in UI)')
+    args = parser.parse_args()
+    
+    if args.model:
+        # Update the model choice component to be disabled and set to the fixed model
+        model_choice.value = args.model
+        model_choice.interactive = False
+        
     demo.launch(share=True)
