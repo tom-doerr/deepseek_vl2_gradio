@@ -82,7 +82,7 @@ with gr.Blocks() as demo:
             image_input = gr.File(
                 label="Upload Images",
                 file_count="multiple",
-                type="file"
+                type="filepath"
             )
             text_input = gr.Textbox(
                 label="Enter your prompt",
