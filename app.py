@@ -4,7 +4,7 @@ import argparse
 from transformers import AutoModelForCausalLM
 from deepseek_vl.models import DeepseekVLV2Processor, DeepseekVLV2ForCausalLM
 from deepseek_vl.utils.io import load_pil_images
-from PIL import Image
+from PIL import Image, ImageDraw
 import os
 
 # Model initialization will be done in the processing function
@@ -23,6 +23,7 @@ def load_model(model_size):
     return vl_chat_processor, tokenizer, vl_gpt
 
 def process_image_and_prompt(images, prompt, model_size):
+    output_images = []
     try:
         # Load model based on selected size
         vl_chat_processor, tokenizer, vl_gpt = load_model(model_size)
@@ -64,9 +65,13 @@ def process_image_and_prompt(images, prompt, model_size):
         )
 
         answer = tokenizer.decode(outputs[0].cpu().tolist(), skip_special_tokens=True)
-        return answer
+        # Process the response to extract any bounding box information
+        # For now, just display the original images
+        output_images = [Image.open(img.name) for img in images]
+        
+        return answer, output_images
     except Exception as e:
-        return f"Error: {str(e)}"
+        return f"Error: {str(e)}", None
 
 # Parse arguments first
 parser = argparse.ArgumentParser(description='DeepseekVL Demo')
@@ -100,11 +105,12 @@ with gr.Blocks() as demo:
         
         with gr.Column():
             output = gr.Textbox(label="Model Response")
+            image_output = gr.Gallery(label="Processed Images")
     
     submit_btn.click(
         fn=process_image_and_prompt,
         inputs=[image_input, text_input, model_choice],
-        outputs=output
+        outputs=[output, image_output]
     )
 
 if __name__ == "__main__":
