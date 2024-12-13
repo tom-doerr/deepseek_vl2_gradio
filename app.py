@@ -41,9 +41,19 @@ def process_image_and_prompt(images, prompt, model_size):
             {"role": "<|Assistant|>", "content": ""},
         ]
 
-        # Convert uploaded images to PIL format
-        pil_images = [Image.open(img.name) for img in images]
+        # Convert uploaded images to PIL format and store them
+        pil_images = []
+        for img in images:
+            if img is not None and hasattr(img, 'name'):
+                try:
+                    pil_img = Image.open(img.name)
+                    pil_images.append(pil_img)
+                except Exception as e:
+                    return f"Error loading image: {str(e)}", []
         
+        if not pil_images:
+            return "No valid images were uploaded.", []
+            
         # Prepare inputs
         prepare_inputs = vl_chat_processor(
             conversations=conversation,
