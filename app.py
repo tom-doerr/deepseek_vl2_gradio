@@ -1,10 +1,11 @@
 import torch
 import gradio as gr
 import argparse
+import re
 from transformers import AutoModelForCausalLM
 from deepseek_vl.models import DeepseekVLV2Processor, DeepseekVLV2ForCausalLM
 from deepseek_vl.utils.io import load_pil_images
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 import os
 
 # Model initialization will be done in the processing function
@@ -21,6 +22,43 @@ def load_model(model_size):
     vl_gpt = AutoModelForCausalLM.from_pretrained(model_path, trust_remote_code=True)
     vl_gpt = vl_gpt.to(torch.bfloat16).cuda().eval()
     return vl_chat_processor, tokenizer, vl_gpt
+
+def draw_bounding_boxes(image, text):
+    """
+    Parse detection tags from text and draw bounding boxes on the image
+    Format: <|det|>object_name<box>x1,y1,x2,y2</box><|/det|>
+    """
+    # Create a copy of the image to draw on
+    draw_image = image.copy()
+    draw = ImageDraw.Draw(draw_image)
+    
+    # Regular expression to find detection tags
+    det_pattern = r'<\|det\|>(.*?)<box>(.*?)</box><\|/det\|>'
+    detections = re.findall(det_pattern, text)
+    
+    # Colors for different objects (cycling through)
+    colors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF']
+    
+    for idx, (obj_name, box_coords) in enumerate(detections):
+        # Parse coordinates
+        try:
+            x1, y1, x2, y2 = map(float, box_coords.split(','))
+            # Convert relative coordinates to absolute if needed
+            width, height = image.size
+            x1, x2 = x1 * width, x2 * width
+            y1, y2 = y1 * height, y2 * height
+            
+            # Draw rectangle
+            color = colors[idx % len(colors)]
+            draw.rectangle([x1, y1, x2, y2], outline=color, width=3)
+            
+            # Draw label
+            draw.text((x1, y1-15), obj_name, fill=color)
+            
+        except ValueError as e:
+            print(f"Error parsing coordinates for {obj_name}: {e}")
+    
+    return draw_image
 
 def process_image_and_prompt(images, prompt, model_size):
     if not images:
@@ -78,10 +116,19 @@ def process_image_and_prompt(images, prompt, model_size):
         )
 
         answer = tokenizer.decode(outputs[0].cpu().tolist(), skip_special_tokens=True)
-        # Process the response to extract any bounding box information
-        # For now, just display the original images
-        output_images = [Image.open(img.name) for img in images]
+        # Process each image and draw bounding boxes based on the answer
+        output_images = []
+        for img in images:
+            if img is not None and hasattr(img, 'name'):
+                try:
+                    pil_img = Image.open(img.name)
+                    annotated_img = draw_bounding_boxes(pil_img, answer)
+                    output_images.append(annotated_img)
+                except Exception as img_error:
+                    print(f"Error processing image: {str(img_error)}")
         
+        if not output_images:
+            return answer, []
         return answer, output_images
     except Exception as e:
         return f"Error: {str(e)}", []
