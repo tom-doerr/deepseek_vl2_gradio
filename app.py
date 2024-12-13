@@ -68,6 +68,12 @@ def process_image_and_prompt(images, prompt, model_size):
     except Exception as e:
         return f"Error: {str(e)}"
 
+# Parse arguments first
+parser = argparse.ArgumentParser(description='DeepseekVL Demo')
+parser.add_argument('--model', choices=list(MODEL_PATHS.keys()), 
+                   help='Fix the model size (disables model selection in UI)')
+args = parser.parse_args()
+
 # Create Gradio interface
 with gr.Blocks() as demo:
     gr.Markdown("# DeepseekVL Visual Language Model Demo")
@@ -76,9 +82,10 @@ with gr.Blocks() as demo:
         with gr.Column():
             model_choice = gr.Radio(
                 choices=list(MODEL_PATHS.keys()),
-                value="small",
+                value=args.model if args.model else "small",
                 label="Model Size",
-                info="Choose the model size (larger = better but slower)"
+                info="Choose the model size (larger = better but slower)",
+                interactive=not bool(args.model)
             )
             image_input = gr.File(
                 label="Upload Images",
@@ -101,18 +108,4 @@ with gr.Blocks() as demo:
     )
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='DeepseekVL Demo')
-    parser.add_argument('--model', choices=list(MODEL_PATHS.keys()), 
-                       help='Fix the model size (disables model selection in UI)')
-    args = parser.parse_args()
-    
-    if args.model:
-        # If model is specified via CLI, fix it and disable UI selection
-        model_choice.value = args.model
-        model_choice.interactive = False
-    else:
-        # Default to "small" but keep UI selection enabled
-        model_choice.value = "small"
-        model_choice.interactive = True
-    
     demo.launch(share=True)
