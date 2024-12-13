@@ -81,7 +81,7 @@ with gr.Blocks() as demo:
     with gr.Row():
         with gr.Column():
             model_choice = gr.Radio(
-                choices=list(MODEL_PATHS.keys()),
+                choices=[args.model] if args.model else list(MODEL_PATHS.keys()),
                 value=args.model if args.model else "small",
                 label="Model Size",
                 info="Choose the model size (larger = better but slower)",
